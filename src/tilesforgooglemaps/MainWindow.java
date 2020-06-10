@@ -11,6 +11,8 @@ import java.util.LinkedList;
 import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
@@ -29,6 +31,17 @@ public class MainWindow extends javax.swing.JFrame {
         initComponents();
         FileFilter imageFilter = new FileNameExtensionFilter("Image files", ImageIO.getReaderFileSuffixes());
         fchImage.setFileFilter(imageFilter);
+
+        spnTilts.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                if ((int) spnTilts.getValue() > 10) {
+                    lblWarning.setText("Take care. For a higher number of tiles, the generation time can be more than hours.");
+                } else {
+                    lblWarning.setText("");
+                }
+            }
+        });
     }
 
     /**
@@ -47,6 +60,7 @@ public class MainWindow extends javax.swing.JFrame {
         pgrTask = new javax.swing.JProgressBar();
         lblPath = new javax.swing.JLabel();
         spnTilts = new javax.swing.JSpinner();
+        lblWarning = new javax.swing.JLabel();
 
         fchImage.setApproveButtonText("Select");
         fchImage.setApproveButtonToolTipText("");
@@ -78,6 +92,8 @@ public class MainWindow extends javax.swing.JFrame {
 
         spnTilts.setModel(new javax.swing.SpinnerNumberModel(5, 0, 50, 1));
 
+        lblWarning.setForeground(new java.awt.Color(255, 153, 0));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -85,6 +101,7 @@ public class MainWindow extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblWarning, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(lblPath)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 402, Short.MAX_VALUE)
@@ -103,8 +120,10 @@ public class MainWindow extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(lblText)
                 .addGap(18, 18, 18)
-                .addComponent(pgrTask, javax.swing.GroupLayout.DEFAULT_SIZE, 22, Short.MAX_VALUE)
-                .addGap(18, 18, 18)
+                .addComponent(pgrTask, javax.swing.GroupLayout.DEFAULT_SIZE, 41, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblWarning)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnGenerate)
                     .addComponent(btnSelect)
@@ -120,48 +139,41 @@ public class MainWindow extends javax.swing.JFrame {
         lblText.setText("Generating...");
         btnGenerate.setEnabled(false);
         btnSelect.setEnabled(false);
-        int zoom = (int)spnTilts.getValue();
-        int maximum = 0;
-        int edge = 0;
-        for (int i = 0; i <= zoom; i++) {
-            edge = (int) Math.pow(2, i);
-            maximum += (edge * edge);
-        }
+        spnTilts.setEnabled(false);
+        int zoom = (int) spnTilts.getValue();
 
-        pgrTask.setMaximum(maximum);
+        Thread task = new Thread(() -> {
+            try {
+                for (int i = 0; i <= zoom; i++) {
+                    final int currentZoom = i;
+                    int edge = (int) Math.pow(2, i);
 
-        Thread task = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    for (int i = 0; i <= zoom; i++) {
-                        int edge = (int) Math.pow(2, i);
-                        LinkedList<BufferedImage> tiles = ImageTools.split(lblPath.getText(), edge, edge);
-                        for (int j = 0; j < edge; j++) {
-                            for (int k = 0; k < edge; k++) {
-                                ImageTools.resize(tiles.get((j * edge) + k), selectedFile.getParent() + "/map/" + i + "/" + k + "/" + j + ".png", 256, 256);
-                                SwingUtilities.invokeLater(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        pgrTask.setValue(pgrTask.getValue() + 1);
-                                    }
-                                });
-                            }
+                    SwingUtilities.invokeLater(() -> {
+                        lblText.setText("Generating zoom " + currentZoom);
+                        pgrTask.setValue(0);
+                        pgrTask.setMaximum(edge * edge);
+                    });
+
+                    LinkedList<BufferedImage> tiles = ImageTools.split(lblPath.getText(), edge, edge);
+                    for (int j = 0; j < edge; j++) {
+                        for (int k = 0; k < edge; k++) {
+                            ImageTools.resize(tiles.get((j * edge) + k), selectedFile.getParent() + "/maps/" + selectedFile.getName().replaceFirst("[.][^.]+$", "") + "/" + i + "/" + k + "/" + j + ".png", 256, 256);
+                            SwingUtilities.invokeLater(() -> {
+                                pgrTask.setValue(pgrTask.getValue() + 1);
+                            });
                         }
                     }
-                } catch (Exception e) {
-
                 }
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        pgrTask.setValue(0);
-                        lblText.setText("Tilts generated");
-                        lblPath.setText("");
-                        btnSelect.setEnabled(true);
-                    }
-                });
+            } catch (Exception e) {
+
             }
+            SwingUtilities.invokeLater(() -> {
+                pgrTask.setValue(0);
+                lblText.setText("Select an Image...");
+                lblPath.setText("Tilts generated");
+                btnSelect.setEnabled(true);
+                spnTilts.setEnabled(true);
+            });
         });
         task.start();
     }//GEN-LAST:event_btnGenerateActionPerformed
@@ -217,6 +229,7 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JFileChooser fchImage;
     private javax.swing.JLabel lblPath;
     private javax.swing.JLabel lblText;
+    private javax.swing.JLabel lblWarning;
     private javax.swing.JProgressBar pgrTask;
     private javax.swing.JSpinner spnTilts;
     // End of variables declaration//GEN-END:variables
