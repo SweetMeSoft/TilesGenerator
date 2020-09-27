@@ -41,8 +41,8 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="lblWarning" max="32767" attributes="0"/>
                   <Group type="102" alignment="1" attributes="0">
-                      <Component id="lblPath" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="402" max="32767" attributes="0"/>
+                      <Component id="lblPath" pref="535" max="32767" attributes="0"/>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="spnTilts" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="btnSelect" min="-2" max="-2" attributes="0"/>
@@ -62,7 +62,7 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lblText" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="separate" max="-2" attributes="0"/>
-              <Component id="pgrTask" pref="41" max="32767" attributes="0"/>
+              <Component id="pgrTask" pref="26" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lblWarning" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>

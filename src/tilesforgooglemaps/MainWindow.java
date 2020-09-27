@@ -103,8 +103,8 @@ public class MainWindow extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lblWarning, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(lblPath)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 402, Short.MAX_VALUE)
+                        .addComponent(lblPath, javax.swing.GroupLayout.DEFAULT_SIZE, 535, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
                         .addComponent(spnTilts, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
                         .addComponent(btnSelect)
@@ -120,7 +120,7 @@ public class MainWindow extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(lblText)
                 .addGap(18, 18, 18)
-                .addComponent(pgrTask, javax.swing.GroupLayout.DEFAULT_SIZE, 41, Short.MAX_VALUE)
+                .addComponent(pgrTask, javax.swing.GroupLayout.DEFAULT_SIZE, 26, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblWarning)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -136,7 +136,7 @@ public class MainWindow extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnGenerateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGenerateActionPerformed
-        lblText.setText("Generating...");
+        lblText.setText("Reading image...");
         btnGenerate.setEnabled(false);
         btnSelect.setEnabled(false);
         spnTilts.setEnabled(false);
@@ -144,6 +144,7 @@ public class MainWindow extends javax.swing.JFrame {
 
         Thread task = new Thread(() -> {
             try {
+                BufferedImage originalImage = ImageIO.read(new File(lblPath.getText()));
                 for (int i = 0; i <= zoom; i++) {
                     final int currentZoom = i;
                     int edge = (int) Math.pow(2, i);
@@ -154,16 +155,18 @@ public class MainWindow extends javax.swing.JFrame {
                         pgrTask.setMaximum(edge * edge);
                     });
 
-                    LinkedList<BufferedImage> tiles = ImageTools.split(lblPath.getText(), edge, edge);
+                    LinkedList<BufferedImage> tiles = ImageTools.split(originalImage, edge, edge);
                     for (int j = 0; j < edge; j++) {
                         for (int k = 0; k < edge; k++) {
-                            ImageTools.resize(tiles.get((j * edge) + k), selectedFile.getParent() + "/maps/" + selectedFile.getName().replaceFirst("[.][^.]+$", "") + "/" + i + "/" + k + "/" + j + ".png", 256, 256);
+                            ImageTools.resize(tiles.get((j * edge) + k), selectedFile.getParent() + "/" + selectedFile.getName().replaceFirst("[.][^.]+$", "") + "/" + i + "/" + k + "/" + j + ".jpg", 256, 256);
                             SwingUtilities.invokeLater(() -> {
                                 pgrTask.setValue(pgrTask.getValue() + 1);
                             });
                         }
                     }
                 }
+                
+                originalImage.flush();
             } catch (Exception e) {
 
             }
